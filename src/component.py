@@ -3,6 +3,7 @@ Template Component main class.
 
 """
 import csv
+import os
 import logging
 from datetime import datetime
 
@@ -60,7 +61,12 @@ class Component(ComponentBase):
         logging.info(previous_state.get('some_state_parameter'))
 
         # Create output table (Tabledefinition - just metadata)
-        table = self.create_out_table_definition('output.csv', incremental=True, primary_key=['timestamp'])
+        table = self.create_out_table_definition('output2.csv', incremental=True, primary_key=['timestamp'])
+        
+        # Check if the directory exists, if not, create it
+        directory = os.path.dirname(table.full_path)
+        if not os.path.exists(directory):
+            os.makedirs(directory)
 
         # get file path of the table (data/out/tables/Features.csv)
         out_table_path = table.full_path
