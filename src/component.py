@@ -62,7 +62,7 @@ class Component(ComponentBase):
 
         # Create output table (Tabledefinition - just metadata)
         table = self.create_out_table_definition('output2.csv', incremental=True, primary_key=['timestamp'])
-        
+
         # Check if the directory exists, if not, create it
         directory = os.path.dirname(table.full_path)
         if not os.path.exists(directory):
