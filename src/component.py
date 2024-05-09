@@ -1,9 +1,5 @@
-"""
-Template Component main class.
-
-"""
-
 import csv
+import json
 import os
 import logging
 import requests
@@ -49,27 +45,84 @@ class Component(ComponentBase):
         if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "other resources":
             logging.info("Downloading settings tables")
 
-            # list of endpoints to download
-            endpoints = [
-                "custom-fields",
-                "product-custom-fields",
-                "refund-accounts",
-                # "shipping-routes",
-                "states",
-                "tags",
-                "types",
-                "users"
-            ]
+            # missing processing for endpoint "shipping-routes" as it is not available in the API
 
-            # download data for each endpoint
-            for endpoint in endpoints:
-                logging.info(f"Downloading data for endpoint {endpoint}")
-                try:
-                    data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                    self.save_data_csv(data, endpoint)
-                except Exception as e:
-                    logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
-                    continue
+            # processing custom-fields
+            endpoint = "custom-fields"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing product-custom-fields
+            endpoint = "product-custom-fields"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing refund-accounts
+            endpoint = "refund-accounts"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing states
+            endpoint = "states"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing tags
+            endpoint = "tags"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing types
+            endpoint = "types"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+
+            # processing users
+            endpoint = "users"
+            logging.info(f"Downloading data for endpoint {endpoint}")
+            try:
+                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                # process the data
+
+                self.save_data_csv(data, endpoint)
+            except Exception as e:
+                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
         if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "only tickets":
             logging.info("=====================================")
@@ -77,29 +130,32 @@ class Component(ComponentBase):
 
     def save_data_csv(self, data, filename):
         """
-        Function to save data to CSV file.
-        To reduce memory usage, data is saved row by row.
+        Function to save data to CSV file and create a corresponding manifest file.
         """
-        # Assume 'data' is already a list of dictionaries, no need to call .json() or .get('results', [])
-        # Create output table (Tabledefinition - just metadata)
         table = self.create_out_table_definition(filename + '.csv', primary_key=['id'])
-
-        # Check if the directory exists, if not, create it
         directory = os.path.dirname(table.full_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        # path to the output file
         out_table_path = table.full_path
 
-        # Write data to the output file from JSON response row by row
         with open(out_table_path, 'w', newline='') as csvfile:
-            if data:  # Check if data is not empty
+            if data:  # Ensure there is data to process
                 writer = csv.writer(csvfile)
-                if data:  # Additional check if data is not empty to avoid IndexError
-                    writer.writerow(data[0].keys())  # headers
+                writer.writerow(data[0].keys())  # Write CSV headers
                 for row in data:
                     writer.writerow(row.values())
+
+        # Create and write the manifest file
+        manifest_path = out_table_path + '.manifest'
+        manifest_data = {
+            "primary_key": ["id"],  # Specify primary keys, if any
+            "incremental": False,  # or True if you want to load data incrementally
+            "columns": list(data[0].keys()) if data else []
+        }
+
+        with open(manifest_path, 'w') as manifest_file:
+            json.dump(manifest_data, manifest_file)
 
     def get_retino_data(self, token, endpoint, increment=False, last_update=None):
         """
