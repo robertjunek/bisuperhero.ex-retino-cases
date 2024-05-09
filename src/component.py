@@ -122,8 +122,10 @@ class Component(ComponentBase):
             # Get data from the API
             response = requests.get(url, headers=headers, params={'page': current_page})
             if response.status_code != 200:
-                logging.error(f"Failed to get data from Retino API for endpoint {endpoint}. Returned status code: {response.status_code}")
-                raise Exception(f"Failed to get data from Retino API for endpoint {endpoint}. Returned status code: {response.status_code}")
+                logging.error(f"Failed to get data from Retino API for endpoint {endpoint}. "
+                              f"Returned status code: {response.status_code}")
+                raise Exception(f"Failed to get data from Retino API for endpoint {endpoint}. "
+                                f"Returned status code: {response.status_code}")
 
             # Convert response to JSON
             data = response.json()
