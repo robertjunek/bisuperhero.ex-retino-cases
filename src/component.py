@@ -30,6 +30,7 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
+        self.data_folder = "data/out/tables"
 
     def run(self):
         """
@@ -52,108 +53,129 @@ class Component(ComponentBase):
             logging.info(f"Downloading data for endpoint {endpoint}")
             try:
                 data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+                self.process_custom_fields(data, endpoint)
 
-                self.save_data_csv(data, endpoint)
             except Exception as e:
                 logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing product-custom-fields
-            endpoint = "product-custom-fields"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing product-custom-fields
+            # endpoint = "product-custom-fields"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing refund-accounts
-            endpoint = "refund-accounts"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing refund-accounts
+            # endpoint = "refund-accounts"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing states
-            endpoint = "states"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing states
+            # endpoint = "states"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing tags
-            endpoint = "tags"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing tags
+            # endpoint = "tags"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing types
-            endpoint = "types"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing types
+            # endpoint = "types"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
-            # processing users
-            endpoint = "users"
-            logging.info(f"Downloading data for endpoint {endpoint}")
-            try:
-                data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
-                # process the data
+            # # processing users
+            # endpoint = "users"
+            # logging.info(f"Downloading data for endpoint {endpoint}")
+            # try:
+            #     data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+            #     # process the data
 
-                self.save_data_csv(data, endpoint)
-            except Exception as e:
-                logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+            #     self.save_data_csv(data, endpoint)
+            # except Exception as e:
+            #     logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
         if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "only tickets":
             logging.info("=====================================")
             logging.info("Downloading tickets data")
 
-    def save_data_csv(self, data, filename):
-        """
-        Function to save data to CSV file and create a corresponding manifest file.
-        """
-        table = self.create_out_table_definition(filename + '.csv', primary_key=['id'])
-        directory = os.path.dirname(table.full_path)
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+    def process_custom_fields(self, data, endpoint):
+        fields_output_path = os.path.join(self.data_folder, f'{endpoint}_fields.csv')
+        names_output_path = os.path.join(self.data_folder, f'{endpoint}_names.csv')
+        options_output_path = os.path.join(self.data_folder, f'{endpoint}_options.csv')
+        option_labels_output_path = os.path.join(self.data_folder, f'{endpoint}_option_labels.csv')
 
-        out_table_path = table.full_path
+        # Handle each file separately
+        with open(fields_output_path, 'w', newline='') as fields_file:
+            field_writer = csv.writer(fields_file)
+            field_writer.writerow(['id', 'type', 'position'])
+            for field in data:
+                field_writer.writerow([field['id'], field['type'], field['position']])
 
-        with open(out_table_path, 'w', newline='') as csvfile:
-            if data:  # Ensure there is data to process
-                writer = csv.writer(csvfile)
-                writer.writerow(data[0].keys())  # Write CSV headers
-                for row in data:
-                    writer.writerow(row.values())
+        with open(names_output_path, 'w', newline='') as names_file:
+            name_writer = csv.writer(names_file)
+            name_writer.writerow(['field_id', 'language_code', 'value'])
+            for field in data:
+                for lang, name in field['name'].items():
+                    name_writer.writerow([field['id'], lang, name])
 
-        # Create and write the manifest file
-        manifest_path = out_table_path + '.manifest'
+        with open(options_output_path, 'w', newline='') as options_file:
+            option_writer = csv.writer(options_file)
+            option_writer.writerow(['id', 'field_id'])
+            for field in data:
+                for option in field.get('options', []):
+                    option_writer.writerow([option['id'], field['id']])
+
+        with open(option_labels_output_path, 'w', newline='') as option_labels_file:
+            option_label_writer = csv.writer(option_labels_file)
+            option_label_writer.writerow(['option_id', 'language_code', 'value'])
+            for field in data:
+                for option in field.get('options', []):
+                    for lang, label in option['label'].items():
+                        option_label_writer.writerow([option['id'], lang, label])
+
+        # Creating manifest files
+        self.create_manifest(fields_output_path, ['id'])
+        self.create_manifest(names_output_path, ['field_id', 'language_code'])
+        self.create_manifest(options_output_path, ['id', 'field_id'])
+        self.create_manifest(option_labels_output_path, ['option_id', 'language_code'])
+
+    def create_manifest(self, csv_file_path, primary_keys):
+        manifest_path = f"{csv_file_path}.manifest"
         manifest_data = {
-            "primary_key": ["id"],  # Specify primary keys, if any
-            "incremental": False,  # or True if you want to load data incrementally
-            "columns": list(data[0].keys()) if data else []
+            "primary_key": primary_keys,
+            "incremental": False,
+            "columns": []
         }
-
         with open(manifest_path, 'w') as manifest_file:
             json.dump(manifest_data, manifest_file)
 
