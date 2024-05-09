@@ -2,6 +2,7 @@
 Template Component main class.
 
 """
+
 import csv
 import os
 import logging
