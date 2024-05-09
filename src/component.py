@@ -6,19 +6,19 @@ Template Component main class.
 import csv
 import os
 import logging
-from datetime import datetime
-
+import requests
+# from datetime import datetime
 from keboola.component.base import ComponentBase
 from keboola.component.exceptions import UserException
 
 # configuration variables
 KEY_API_TOKEN = '#api_token'
-KEY_PRINT_HELLO = 'print_hello'
+KEY_DATA_TABLES = "data_selection"
+KEY_INCREMENTAL_UPDATE = "incremental_update"
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_PRINT_HELLO]
-REQUIRED_IMAGE_PARS = []
+REQUIRED_PARAMETERS = [KEY_API_TOKEN, KEY_DATA_TABLES]
 
 
 class Component(ComponentBase):
@@ -40,63 +40,102 @@ class Component(ComponentBase):
         Main execution code
         """
 
-        # ####### EXAMPLE TO REMOVE
         # check for missing configuration parameters
         self.validate_configuration_parameters(REQUIRED_PARAMETERS)
-        self.validate_image_parameters(REQUIRED_IMAGE_PARS)
         params = self.configuration.parameters
+
         # Access parameters in data/config.json
-        if params.get(KEY_PRINT_HELLO):
-            logging.info("Hello World")
+        # values for KEY_DATA_TABLES are: "all data", "only tickets", "other resources"
+        if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "other resources":
+            logging.info("Downloading settings tables")
 
-        # get input table definitions
-        input_tables = self.get_input_tables_definitions()
-        for table in input_tables:
-            logging.info(f'Received input table: {table.name} with path: {table.full_path}')
+            # list of endpoints to download
+            endpoints = [
+                "custom-fields",
+                "product-custom-fields",
+                "refund-accounts",
+                # "shipping-routes",
+                "states",
+                "tags",
+                "types",
+                "users"
+            ]
 
-        if len(input_tables) == 0:
-            raise UserException("No input tables found")
+            # download data for each endpoint
+            for endpoint in endpoints:
+                logging.info(f"Downloading data for endpoint {endpoint}")
+                try:
+                    data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint)
+                    self.save_data_csv(data, endpoint)
+                except Exception as e:
+                    logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
+                    continue
 
-        # get last state data/in/state.json from previous run
-        previous_state = self.get_state_file()
-        logging.info(previous_state.get('some_state_parameter'))
+        if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "only tickets":
+            logging.info("=====================================")
+            logging.info("Downloading tickets data")
 
+    def save_data_csv(self, data, filename):
+        """
+        Function to save data to CSV file.
+        To reduce memory usage, data is saved row by row.
+        """
+        # Assume 'data' is already a list of dictionaries, no need to call .json() or .get('results', [])
         # Create output table (Tabledefinition - just metadata)
-        table = self.create_out_table_definition('output2.csv', incremental=True, primary_key=['timestamp'])
+        table = self.create_out_table_definition(filename + '.csv', primary_key=['id'])
 
         # Check if the directory exists, if not, create it
         directory = os.path.dirname(table.full_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
 
-        # get file path of the table (data/out/tables/Features.csv)
+        # path to the output file
         out_table_path = table.full_path
-        logging.info(out_table_path)
 
-        # Add timestamp column and save into out_table_path
-        input_table = input_tables[0]
-        with (open(input_table.full_path, 'r') as inp_file,
-              open(table.full_path, mode='wt', encoding='utf-8', newline='') as out_file):
-            reader = csv.DictReader(inp_file)
+        # Write data to the output file from JSON response row by row
+        with open(out_table_path, 'w', newline='') as csvfile:
+            if data:  # Check if data is not empty
+                writer = csv.writer(csvfile)
+                if data:  # Additional check if data is not empty to avoid IndexError
+                    writer.writerow(data[0].keys())  # headers
+                for row in data:
+                    writer.writerow(row.values())
 
-            columns = list(reader.fieldnames)
-            # append timestamp
-            columns.append('timestamp')
+    def get_retino_data(self, token, endpoint, increment=False, last_update=None):
+        """
+        Function to fetch all pages of data from the Retino API
+        """
+        # URL for the API
+        url = f"https://app.retino.com/api/v2/{endpoint}"
 
-            # write result with column added
-            writer = csv.DictWriter(out_file, fieldnames=columns)
-            writer.writeheader()
-            for in_row in reader:
-                in_row['timestamp'] = datetime.now().isoformat()
-                writer.writerow(in_row)
+        # Set headers
+        headers = {"Authorization": f"Token {token}"}
 
-        # Save table manifest (output.csv.manifest) from the tabledefinition
-        self.write_manifest(table)
+        # Initialize data collection
+        all_data = []
 
-        # Write new state - will be available next run
-        self.write_state_file({"some_state_parameter": "value"})
+        # Start with the first page
+        current_page = 1
+        total_pages = 1  # Assume there is at least one page
 
-        # ####### EXAMPLE TO REMOVE END
+        while current_page <= total_pages:
+            # Get data from the API
+            response = requests.get(url, headers=headers, params={'page': current_page})
+            if response.status_code != 200:
+                logging.error(f"Failed to get data from Retino API for endpoint {endpoint}. Returned status code: {response.status_code}")
+                raise Exception(f"Failed to get data from Retino API for endpoint {endpoint}. Returned status code: {response.status_code}")
+
+            # Convert response to JSON
+            data = response.json()
+
+            # Add the results to the all_data list
+            all_data.extend(data.get('results', []))
+
+            # Update total_pages and current_page
+            total_pages = data.get('total_pages', 1)
+            current_page += 1
+
+        return all_data
 
 
 """

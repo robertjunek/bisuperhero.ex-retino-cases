@@ -1,18 +1,42 @@
 {
   "type": "object",
-  "title": "extractor configuration",
   "required": [
-    "print_hello"
+    "#api_token",
+    "data_selection"
   ],
   "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
+    "#api_token": {
+      "type": "string",
+      "links": [
+        {
+          "rel": "Retino settings with your token",
+          "href": "https://app.retino.io/settings/api-v2/api/"
+        }
+      ],
+      "title": "Retino API token",
+      "format": "password",
+      "default": "",
+      "minLength": 1,
+      "description": "Your API token can be found in your Retino account settings.",
       "propertyOrder": 1
     },
-    "debug": {
+    "data_selection": {
+      "enum": [
+        "all data",
+        "only tickets",
+        "other resources"
+      ],
+      "type": "string",
+      "title": "Data Selection",
+      "default": "all data",
+      "description": "Select the data you want to fetch from Retino. You can choose between all data, only tickets or other resources (state, ticket type, ...). This setting can be used to reduce the amount of processing time by excluding setting tables from the daily update.",
+      "propertyOrder": 3
+    },
+    "incremental_update": {
       "type": "boolean",
-      "title": "Debug",
+      "title": "Incremental Update",
+      "default": true,
+      "description": "If enabled, only new or updated tickets will be fetched from Retino. Default and recommended setting is enabled. If disabled, all tickets will be fetched from Retino every time the data source is updated. This can lead to long loading times.",
       "propertyOrder": 2
     }
   }
