@@ -30,7 +30,6 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
-        self.data_folder = "data/out/tables"
 
     def run(self):
         """
@@ -41,7 +40,10 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(REQUIRED_PARAMETERS)
         params = self.configuration.parameters
 
-        # Access parameters in data/config.json
+        # set the data folder
+        self.data_folder = self.tables_out_path
+        logging.info(f"Data folder: {self.data_folder}")
+
         # values for KEY_DATA_TABLES are: "all data", "only tickets", "other resources"
         if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "other resources":
             logging.info("Downloading settings tables")
