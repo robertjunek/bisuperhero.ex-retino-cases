@@ -128,7 +128,7 @@ class Component(ComponentBase):
             logging.info(f"Downloading data for endpoint {endpoint}")
             try:
                 data = self.get_retino_data(params.get(KEY_API_TOKEN), endpoint, increment)
-                # self.process_tickets(data, endpoint)
+                self.process_tickets(data, endpoint, increment)
             except Exception as e:
                 logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
@@ -229,7 +229,7 @@ class Component(ComponentBase):
         self.create_manifest(options_output_path, ['id', 'field_id'])
         self.create_manifest(option_labels_output_path, ['option_id', 'language_code'])
 
-    def create_manifest(self, csv_file_path, primary_keys):
+    def create_manifest(self, csv_file_path, primary_keys, incremental=False):
         """Creates a manifest file for a CSV file
 
         Args:
@@ -239,7 +239,7 @@ class Component(ComponentBase):
         manifest_path = f"{csv_file_path}.manifest"
         manifest_data = {
             "primary_key": primary_keys,
-            "incremental": False,
+            "incremental": incremental,
             "columns": []
         }
         with open(manifest_path, 'w') as manifest_file:
@@ -463,6 +463,58 @@ class Component(ComponentBase):
 
         # Generate manifest file for the CSV
         self.create_manifest(users_output_path, ['id'])
+
+    def process_tickets(self, data, endpoint, incremental):
+        tickets_output_path = os.path.join(self.data_folder, f'{endpoint}.csv')
+        bound_orders_output_path = os.path.join(self.data_folder, f'{endpoint}_bound_orders.csv')
+        products_output_path = os.path.join(self.data_folder, f'{endpoint}_products.csv')
+        history_output_path = os.path.join(self.data_folder, f'{endpoint}_history.csv')
+
+        with open(tickets_output_path, 'w', newline='') as file:
+            ticket_writer = csv.writer(file)
+            ticket_writer.writerow(['id', 'company', 'code', 'state', 'type', 'owner'])
+
+        with open(bound_orders_output_path, 'w', newline='') as file:
+            order_writer = csv.writer(file)
+            order_writer.writerow(['ticket_id', 'id', 'code', 'remote_id', 'order_date', 'currency'])
+
+        with open(products_output_path, 'w', newline='') as file:
+            product_writer = csv.writer(file)
+            product_writer.writerow(['ticket_id', 'id', 'bound_order_item', 'price_with_vat', 'name', 'manufacturer'])
+
+        with open(history_output_path, 'w', newline='') as file:
+            history_writer = csv.writer(file)
+            history_writer.writerow(['ticket_id', 'id', 'history_item_type', 'text'])
+
+        for ticket in data:
+            with open(tickets_output_path, 'a', newline='') as file:
+                ticket_writer = csv.writer(file)
+                ticket_writer.writerow([ticket['id'], ticket['company'], ticket['code'],
+                                        ticket['state'], ticket['type'], ticket['owner']])
+
+            with open(bound_orders_output_path, 'a', newline='') as file:
+                order_writer = csv.writer(file)
+                order = ticket['bound_order']
+                order_writer.writerow([ticket['id'], order['id'], order['code'],
+                                       order['remote_id'], order['order_date'], order['currency']])
+
+            with open(products_output_path, 'a', newline='') as file:
+                product_writer = csv.writer(file)
+                for product in ticket['products']:
+                    product_writer.writerow([ticket['id'], product['id'], product['bound_order_item'],
+                                             product['price']['with_vat'], product['name'], product['manufacturer']])
+
+            with open(history_output_path, 'a', newline='') as file:
+                history_writer = csv.writer(file)
+                for history_item in ticket['history_items']:
+                    history_writer.writerow([ticket['id'], history_item['id'], history_item['history_item_type'],
+                                             history_item['history_item_data'].get('text', '')])
+
+        # Generate manifest files
+        self.create_manifest(tickets_output_path, ['id'], incremental=incremental)
+        self.create_manifest(bound_orders_output_path, ['ticket_id', 'id'], incremental=incremental)
+        self.create_manifest(products_output_path, ['ticket_id', 'id'], incremental=incremental)
+        self.create_manifest(history_output_path, ['ticket_id', 'id'], incremental=incremental)
 
 
 """
