@@ -1,5 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -e
-
 flake8 --config=flake8.cfg
 python -m unittest discover

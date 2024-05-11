@@ -1,7 +1,7 @@
 Retino
 =============
 
-Description
+This Keboola component allows you to download all data from your Retino account for further processing. 
 
 **Table of contents:**
 

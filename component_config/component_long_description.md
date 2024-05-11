@@ -16,11 +16,8 @@ Default language is used only for better readability of the downloaded data. It 
 ## Output
 Detailed information about the output can be found in the [component documentation](https://github.com/robertjunek/bisuperhero.ex-retino-cases/blob/master/README.md).
 
-## Further processing
-If you want to process the downloaded data further without any hassle, you can use our [Retino Data Processing component](#) that will automatically create star schemas from the downloaded data.
-
 ## Versions and updates
-All updates are listed in the [component documentation](#).
+All updates are listed in the [component documentation](https://github.com/robertjunek/bisuperhero.ex-retino-cases/blob/master/README.md).
 
 ## Author
 [Robert from bisuperhero.cz](https://bisuperhero.cz) can be reached at [robert@bisuperhero.cz](mailto:robert@bisuperhero.cz)

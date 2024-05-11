@@ -17,5 +17,5 @@ services:
     environment:
       - KBC_DATADIR=./data
     command:
-      - /bin/sh
+      - /bin/bash
       - /code/scripts/build_n_test.sh
