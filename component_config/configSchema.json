@@ -9,7 +9,7 @@
       "type": "string",
       "links": [
         {
-          "rel": "Retino settings with your token",
+          "rel": "Find your API token",
           "href": "https://app.retino.io/settings/api-v2/api/"
         }
       ],
@@ -17,7 +17,7 @@
       "format": "password",
       "default": "",
       "minLength": 1,
-      "description": "Your API token can be found in your Retino account settings.",
+      "description": "API token can be found in your Retino account settings.",
       "propertyOrder": 1
     },
     "data_selection": {
@@ -29,7 +29,7 @@
       "type": "string",
       "title": "Data Selection",
       "default": "all data",
-      "description": "Select the data you want to fetch from Retino. You can choose between all data, only tickets or other resources (state, ticket type, ...). This setting can be used to reduce the amount of processing time by excluding setting tables from the daily update.",
+      "description": "Select the data you want to fetch from Retino. You can choose between all data, only tickets or other resources (state, ticket type, ...). This setting can be used to reduce the amount of processing time by excluding setting tables from the daily update. More explanations can be found in the component documentation.",
       "propertyOrder": 3
     },
     "incremental_update": {
@@ -38,6 +38,14 @@
       "default": true,
       "description": "If enabled, only new or updated tickets will be fetched from Retino. Default and recommended setting is enabled. If disabled, all tickets will be fetched from Retino every time the data source is updated. This can lead to long loading times.",
       "propertyOrder": 2
+    },
+    "default_language": {
+      "enum": [ "en", "de", "cs", "sk", "pl", "hu", "ro", "es", "it", "fr", "hr", "bg", "sl", "el", "nl", "lv", "lt", "et", "da", "sv", "fi", "pt" ],
+      "type": "string",
+      "title": "Default Language",
+      "default": "en",
+      "description": "Select the default language for translations of settings tables. More explanations can be found in the component documentation.",
+      "propertyOrder": 4
     }
   }
 }

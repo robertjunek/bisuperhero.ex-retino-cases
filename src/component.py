@@ -119,7 +119,6 @@ class Component(ComponentBase):
                 logging.error(f"Error downloading data for endpoint {endpoint}: {str(e)}")
 
         if params.get(KEY_DATA_TABLES) == "all data" or params.get(KEY_DATA_TABLES) == "only tickets":
-            logging.info("Downloading tickets data")
 
             # set incremental update flag for tickets only
             increment = params.get(KEY_INCREMENTAL_UPDATE, False)

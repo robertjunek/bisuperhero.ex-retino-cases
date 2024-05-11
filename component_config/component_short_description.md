@@ -1,1 +1,1 @@
-Retino
+Access your Retino tickets easily with component from bisuperhero.cz.
